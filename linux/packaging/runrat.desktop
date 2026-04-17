@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=RunRat
+Comment=Tray activity monitor with a running rat
+Exec=runrat
+Icon=runrat
+Terminal=false
+Categories=Utility;Monitor;
+Keywords=system;monitor;tray;cpu;memory;network;

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" viewBox="0 0 64 32" role="img" aria-label="RunRat frame 1">
+  <path fill="none" stroke="#7b5960" stroke-width="3" stroke-linecap="round" d="M16 17C10 17 6 18 3 22"/>
+  <path fill="#2b2423" d="M17 17c1-7 8-11 19-11 9 1 16 6 15 13-1 6-8 9-19 8-10 0-16-4-15-10z"/>
+  <path fill="#3b3030" d="M24 12c4-3 10-4 17-2 5 2 8 5 8 9-4-3-10-5-17-6-3 0-6-1-8-1z" opacity=".7"/>
+  <circle cx="51" cy="12" r="6" fill="#2b2423"/>
+  <circle cx="47" cy="7" r="3" fill="#d59aa5"/>
+  <circle cx="56" cy="8" r="2.5" fill="#d59aa5"/>
+  <circle cx="53" cy="11" r="1.1" fill="#f7efe9"/>
+  <path fill="#151313" d="M58 14l5 2-5 2z"/>
+  <path fill="none" stroke="#211b1b" stroke-width="2.4" stroke-linecap="round" d="M27 26l3 4M40 26l-4 4"/>
+</svg>

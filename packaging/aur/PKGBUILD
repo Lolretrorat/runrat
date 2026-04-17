@@ -1,22 +1,25 @@
-# Maintainer: Joshua Bevan <maintainer@example.com>
-pkgname=runrat-bin
+# Maintainer: Joshua Bevan <joshua@acis.net.au>
+pkgname=runrat
 pkgver=1.0.2
 pkgrel=1
-pkgdesc="Menu bar system activity monitor with a running rat"
+pkgdesc="Tray system activity monitor with a running rat"
 arch=("x86_64" "aarch64")
 url="https://github.com/Lolretrorat/runrat"
 license=("MIT")
-depends=()
-provides=("runrat")
-conflicts=("runrat")
-source_x86_64=("${pkgname}-${pkgver}-x86_64.tar.gz::${url}/releases/download/v${pkgver}/RunRat-linux-x86_64-${pkgver}.tar.gz")
-source_aarch64=("${pkgname}-${pkgver}-aarch64.tar.gz::${url}/releases/download/v${pkgver}/RunRat-linux-aarch64-${pkgver}.tar.gz")
-sha256sums_x86_64=("REPLACE_WITH_LINUX_X86_64_TARBALL_SHA256")
-sha256sums_aarch64=("REPLACE_WITH_LINUX_AARCH64_TARBALL_SHA256")
+depends=("gtk3" "libayatana-appindicator")
+makedepends=("cmake" "pkgconf")
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=("REPLACE_WITH_SOURCE_TARBALL_SHA256")
+
+build() {
+  cmake \
+    -S "${srcdir}/${pkgname}-${pkgver}/linux" \
+    -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build
+}
 
 package() {
-  install -Dm755 "runrat" "${pkgdir}/usr/bin/runrat"
-  install -Dm644 "runrat.desktop" "${pkgdir}/usr/share/applications/runrat.desktop"
-  install -Dm644 "runrat.png" "${pkgdir}/usr/share/pixmaps/runrat.png"
-  install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  DESTDIR="${pkgdir}" cmake --install build
 }

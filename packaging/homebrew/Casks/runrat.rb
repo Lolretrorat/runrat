@@ -7,5 +7,11 @@ cask "runrat" do
   desc "Native macOS menu bar rat activity monitor"
   homepage "https://github.com/Lolretrorat/runrat"
 
+  depends_on macos: ">= :ventura"
+
   app "RunRat.app"
+
+  zap trash: [
+    "~/Library/Preferences/com.lolretrorat.RunRat.plist",
+  ]
 end
