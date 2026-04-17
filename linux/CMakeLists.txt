@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(RunRatLinux
-  VERSION 1.0.2
+  VERSION 1.0.3
   DESCRIPTION "Linux tray activity monitor with a running rat"
   LANGUAGES C
 )

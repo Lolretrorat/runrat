@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <gio/gio.h>
 #include <libayatana-appindicator/app-indicator.h>
 
 #include <signal.h>
@@ -10,6 +11,7 @@
 #define RUNRAT_FRAME_COUNT 6
 #define RUNRAT_SAMPLE_INTERVAL_MS 1000
 #define RUNRAT_ANIMATION_TICK_MS 25
+#define RUNRAT_RELOAD_WARNING_WINDOW_US (2 * G_USEC_PER_SEC)
 
 typedef struct {
   uint64_t user;
@@ -30,15 +32,16 @@ typedef struct {
 typedef struct {
   AppIndicator *indicator;
   GtkWidget *menu;
-  GtkWidget *cpu_item;
-  GtkWidget *memory_item;
-  GtkWidget *network_item;
+  GtkWidget *btop_item;
   gchar *icon_dir;
   gchar *frame_names[RUNRAT_FRAME_COUNT];
+  gchar *summary_text;
+  guint watcher_id;
   CpuCounters previous_cpu;
   NetworkCounters previous_network;
   gboolean has_previous_cpu;
   gboolean has_previous_network;
+  gboolean tray_watcher_available;
   guint frame_index;
   guint elapsed_animation_ms;
   guint frame_duration_ms;
@@ -46,13 +49,37 @@ typedef struct {
   double memory_percent;
   uint64_t upload_bytes_per_second;
   uint64_t download_bytes_per_second;
+  gint64 last_btop_launch_us;
 } RunRatApp;
 
 static volatile sig_atomic_t should_quit = 0;
+static gint64 suppress_scale_warning_until_us = 0;
 
 static void handle_signal(int signum) {
   (void)signum;
   should_quit = 1;
+}
+
+static void suppress_reload_scale_warning(void) {
+  suppress_scale_warning_until_us = g_get_monotonic_time() + RUNRAT_RELOAD_WARNING_WINDOW_US;
+}
+
+static void gtk_log_handler(
+    const gchar *log_domain,
+    GLogLevelFlags log_level,
+    const gchar *message,
+    gpointer user_data) {
+  gboolean is_reload_scale_warning =
+      (log_level & G_LOG_LEVEL_CRITICAL) != 0 &&
+      g_strcmp0(log_domain, "Gtk") == 0 &&
+      message != NULL &&
+      strstr(message, "gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed") != NULL;
+
+  if (is_reload_scale_warning && g_get_monotonic_time() <= suppress_scale_warning_until_us) {
+    return;
+  }
+
+  g_log_default_handler(log_domain, log_level, message, user_data);
 }
 
 static gchar *resolve_icon_dir(void) {
@@ -235,26 +262,25 @@ static guint frame_duration_for_cpu(double cpu_percent) {
   return duration;
 }
 
-static void set_menu_item_label(GtkWidget *item, const char *label) {
-  gtk_menu_item_set_label(GTK_MENU_ITEM(item), label);
-}
-
-static void update_menu_labels(RunRatApp *app) {
+static void update_indicator_summary(RunRatApp *app) {
   gchar *upload = format_rate(app->upload_bytes_per_second);
   gchar *download = format_rate(app->download_bytes_per_second);
-  gchar *cpu = g_strdup_printf("CPU: %.1f%%", app->cpu_percent);
-  gchar *memory = g_strdup_printf("Memory: %.1f%%", app->memory_percent);
-  gchar *network = g_strdup_printf("Network: %s up / %s down", upload, download);
+  gchar *summary = g_strdup_printf(
+      "RunRat\nCPU %.1f%%\nMemory %.1f%%\nDown %s / Up %s",
+      app->cpu_percent,
+      app->memory_percent,
+      download,
+      upload);
 
-  set_menu_item_label(app->cpu_item, cpu);
-  set_menu_item_label(app->memory_item, memory);
-  set_menu_item_label(app->network_item, network);
+  g_free(app->summary_text);
+  app->summary_text = summary;
+
+  if (app->indicator != NULL) {
+    app_indicator_set_title(app->indicator, app->summary_text);
+  }
 
   g_free(upload);
   g_free(download);
-  g_free(cpu);
-  g_free(memory);
-  g_free(network);
 }
 
 static gboolean sample_metrics(gpointer data) {
@@ -302,13 +328,17 @@ static gboolean sample_metrics(gpointer data) {
   }
 
   app->frame_duration_ms = frame_duration_for_cpu(app->cpu_percent);
-  update_menu_labels(app);
+  update_indicator_summary(app);
 
   return G_SOURCE_CONTINUE;
 }
 
 static gboolean animate_icon(gpointer data) {
   RunRatApp *app = data;
+
+  if (!app->tray_watcher_available) {
+    return G_SOURCE_CONTINUE;
+  }
 
   app->elapsed_animation_ms += RUNRAT_ANIMATION_TICK_MS;
   if (app->elapsed_animation_ms < app->frame_duration_ms) {
@@ -317,13 +347,72 @@ static gboolean animate_icon(gpointer data) {
 
   app->elapsed_animation_ms = 0;
   app->frame_index = (app->frame_index + 1) % RUNRAT_FRAME_COUNT;
-  app_indicator_set_icon_full(app->indicator, app->frame_names[app->frame_index], "RunRat");
+  app_indicator_set_icon_full(
+      app->indicator,
+      app->frame_names[app->frame_index],
+      app->summary_text != NULL ? app->summary_text : "RunRat");
 
   if (should_quit) {
     gtk_main_quit();
   }
 
   return G_SOURCE_CONTINUE;
+}
+
+static gboolean launch_first_available(const char *const *commands) {
+  for (guint index = 0; commands[index] != NULL; index++) {
+    GError *error = NULL;
+    if (g_spawn_command_line_async(commands[index], &error)) {
+      return TRUE;
+    }
+    g_clear_error(&error);
+  }
+
+  return FALSE;
+}
+
+static void launch_btop(void) {
+  const char *custom_command = g_getenv("RUNRAT_BTOP_COMMAND");
+  if (custom_command != NULL && custom_command[0] != '\0') {
+    GError *error = NULL;
+    if (g_spawn_command_line_async(custom_command, &error)) {
+      return;
+    }
+    g_clear_error(&error);
+  }
+
+  const char *commands[] = {
+      "xdg-terminal-exec btop",
+      "alacritty -e btop",
+      "kitty btop",
+      "foot btop",
+      "gnome-terminal -- btop",
+      "xterm -e btop",
+      NULL,
+  };
+
+  if (!launch_first_available(commands)) {
+    g_warning("Unable to launch btop; set RUNRAT_BTOP_COMMAND to a terminal command");
+  }
+}
+
+static void btop_activated(GtkMenuItem *item, gpointer data) {
+  (void)item;
+  (void)data;
+  launch_btop();
+}
+
+static void menu_shown(GtkWidget *menu, gpointer data) {
+  (void)menu;
+
+  RunRatApp *app = data;
+  gint64 now = g_get_monotonic_time();
+  if (now - app->last_btop_launch_us < G_USEC_PER_SEC) {
+    return;
+  }
+
+  app->last_btop_launch_us = now;
+  launch_btop();
 }
 
 static void quit_activated(GtkMenuItem *item, gpointer data) {
@@ -335,21 +424,15 @@ static void quit_activated(GtkMenuItem *item, gpointer data) {
 static GtkWidget *create_menu(RunRatApp *app) {
   GtkWidget *menu = gtk_menu_new();
 
-  app->cpu_item = gtk_menu_item_new_with_label("CPU: --");
-  app->memory_item = gtk_menu_item_new_with_label("Memory: --");
-  app->network_item = gtk_menu_item_new_with_label("Network: --");
+  app->btop_item = gtk_menu_item_new_with_label("Open btop");
   GtkWidget *separator = gtk_separator_menu_item_new();
   GtkWidget *quit_item = gtk_menu_item_new_with_label("Quit");
 
-  gtk_widget_set_sensitive(app->cpu_item, FALSE);
-  gtk_widget_set_sensitive(app->memory_item, FALSE);
-  gtk_widget_set_sensitive(app->network_item, FALSE);
-
+  g_signal_connect(app->btop_item, "activate", G_CALLBACK(btop_activated), app);
   g_signal_connect(quit_item, "activate", G_CALLBACK(quit_activated), app);
+  g_signal_connect(menu, "show", G_CALLBACK(menu_shown), app);
 
-  gtk_menu_shell_append(GTK_MENU_SHELL(menu), app->cpu_item);
-  gtk_menu_shell_append(GTK_MENU_SHELL(menu), app->memory_item);
-  gtk_menu_shell_append(GTK_MENU_SHELL(menu), app->network_item);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu), app->btop_item);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), separator);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), quit_item);
   gtk_widget_show_all(menu);
@@ -357,25 +440,67 @@ static GtkWidget *create_menu(RunRatApp *app) {
   return menu;
 }
 
+static void status_watcher_appeared(
+    GDBusConnection *connection,
+    const gchar *name,
+    const gchar *name_owner,
+    gpointer data) {
+  (void)connection;
+  (void)name;
+  (void)name_owner;
+
+  RunRatApp *app = data;
+  suppress_reload_scale_warning();
+  app->tray_watcher_available = TRUE;
+}
+
+static void status_watcher_vanished(GDBusConnection *connection, const gchar *name, gpointer data) {
+  (void)connection;
+  (void)name;
+
+  RunRatApp *app = data;
+  suppress_reload_scale_warning();
+  app->tray_watcher_available = FALSE;
+}
+
 static void runrat_app_init(RunRatApp *app) {
   memset(app, 0, sizeof(*app));
 
   app->frame_duration_ms = 500;
+  app->tray_watcher_available = TRUE;
   app->icon_dir = resolve_icon_dir();
+  app->summary_text = g_strdup("RunRat\nCollecting metrics");
 
   for (guint index = 0; index < RUNRAT_FRAME_COUNT; index++) {
     app->frame_names[index] = g_strdup_printf("runrat%u", index);
   }
 
   app->menu = create_menu(app);
+  app->watcher_id = g_bus_watch_name(
+      G_BUS_TYPE_SESSION,
+      "org.kde.StatusNotifierWatcher",
+      G_BUS_NAME_WATCHER_FLAGS_NONE,
+      status_watcher_appeared,
+      status_watcher_vanished,
+      app,
+      NULL);
 
-  app->indicator = app_indicator_new(
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+  app->indicator = app_indicator_new_with_path(
       "runrat",
       app->frame_names[0],
-      APP_INDICATOR_CATEGORY_SYSTEM_SERVICES);
-  app_indicator_set_icon_theme_path(app->indicator, app->icon_dir);
-  app_indicator_set_icon_full(app->indicator, app->frame_names[0], "RunRat");
+      APP_INDICATOR_CATEGORY_SYSTEM_SERVICES,
+      app->icon_dir);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+  app_indicator_set_icon_full(app->indicator, app->frame_names[0], app->summary_text);
   app_indicator_set_menu(app->indicator, GTK_MENU(app->menu));
+  app_indicator_set_secondary_activate_target(app->indicator, app->btop_item);
+  app_indicator_set_title(app->indicator, app->summary_text);
   app_indicator_set_status(app->indicator, APP_INDICATOR_STATUS_ACTIVE);
 
   sample_metrics(app);
@@ -384,7 +509,12 @@ static void runrat_app_init(RunRatApp *app) {
 }
 
 static void runrat_app_clear(RunRatApp *app) {
+  if (app->watcher_id != 0) {
+    g_bus_unwatch_name(app->watcher_id);
+  }
+
   if (app->indicator != NULL) {
+    app_indicator_set_status(app->indicator, APP_INDICATOR_STATUS_PASSIVE);
     g_object_unref(app->indicator);
   }
 
@@ -396,12 +526,14 @@ static void runrat_app_clear(RunRatApp *app) {
     g_free(app->frame_names[index]);
   }
 
+  g_free(app->summary_text);
   g_free(app->icon_dir);
 }
 
 int main(int argc, char **argv) {
   signal(SIGINT, handle_signal);
   signal(SIGTERM, handle_signal);
+  g_log_set_handler("Gtk", G_LOG_LEVEL_CRITICAL, gtk_log_handler, NULL);
 
   gtk_init(&argc, &argv);
 

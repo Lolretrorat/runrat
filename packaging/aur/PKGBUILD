@@ -1,6 +1,6 @@
 # Maintainer: Joshua Bevan <joshua@acis.net.au>
 pkgname=runrat
-pkgver=1.0.2
+pkgver=1.0.3
 pkgrel=1
 pkgdesc="Tray system activity monitor with a running rat"
 arch=("x86_64" "aarch64")

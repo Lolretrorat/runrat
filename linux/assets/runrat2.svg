@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" viewBox="0 0 64 32" role="img" aria-label="RunRat frame 2">
-  <path fill="none" stroke="#7b5960" stroke-width="3" stroke-linecap="round" d="M17 16C11 19 7 20 3 18"/>
-  <path fill="#2b2423" d="M18 16c2-7 9-11 20-9 9 1 15 7 13 14-1 6-9 9-20 7-10-1-15-5-13-12z"/>
-  <path fill="#3b3030" d="M26 12c4-3 11-3 17 0 5 2 7 6 6 10-3-4-9-7-16-8-3-1-5-1-7-2z" opacity=".7"/>
-  <circle cx="52" cy="13" r="6" fill="#2b2423"/>
-  <circle cx="48" cy="8" r="3" fill="#d59aa5"/>
-  <circle cx="57" cy="9" r="2.5" fill="#d59aa5"/>
-  <circle cx="54" cy="12" r="1.1" fill="#f7efe9"/>
-  <path fill="#151313" d="M59 15l5 2-5 2z"/>
-  <path fill="none" stroke="#211b1b" stroke-width="2.4" stroke-linecap="round" d="M28 27l-1 3M42 27l5 1"/>
+  <path fill="none" stroke="#d88fa2" stroke-width="3" stroke-linecap="round" d="M17 16C11 19 7 20 3 18"/>
+  <path fill="#4d3939" d="M18 16c2-7 9-11 20-9 9 1 15 7 13 14-1 6-9 9-20 7-10-1-15-5-13-12z"/>
+  <path fill="#6a4b4b" d="M26 12c4-3 11-3 17 0 5 2 7 6 6 10-3-4-9-7-16-8-3-1-5-1-7-2z" opacity=".7"/>
+  <circle cx="52" cy="13" r="6" fill="#4d3939"/>
+  <circle cx="48" cy="8" r="3" fill="#ffb5c4"/>
+  <circle cx="57" cy="9" r="2.5" fill="#ffb5c4"/>
+  <circle cx="54" cy="12" r="1.1" fill="#fffaf5"/>
+  <path fill="#241b1b" d="M59 15l5 2-5 2z"/>
+  <path fill="none" stroke="#3d2b2b" stroke-width="2.4" stroke-linecap="round" d="M28 27l-1 3M42 27l5 1"/>
 </svg>
