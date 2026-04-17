@@ -1,0 +1,12 @@
+
+# macOS
+.DS_Store
+
+# Xcode user data
+RunDog.xcodeproj/xcuserdata/
+RunDog.xcodeproj/project.xcworkspace/xcuserdata/
+RunDog.xcodeproj/project.xcworkspace/
+
+# Build artefacts
+dist/
+build/
