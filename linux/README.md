@@ -10,6 +10,16 @@ This is the Linux implementation of RunRat. It is a GTK 3 and Ayatana AppIndicat
 - GTK 3 development headers
 - Ayatana AppIndicator development headers
 
+## Install
+
+On Arch Linux, install RunRat from the AUR:
+
+```bash
+yay -S runrat
+```
+
+The package installs the tray app, desktop entry, SVG animation frames and license file under standard system paths.
+
 On Arch Linux:
 
 ```bash
@@ -37,10 +47,12 @@ cmake --install build/linux --prefix /usr/local
 
 ## Packaging
 
-The AUR package in `packaging/aur` builds this implementation from source and installs:
+The AUR package in [`../packaging/aur`](../packaging/aur) builds this implementation from the tagged GitHub source archive and installs:
 
 - `/usr/bin/runrat`
 - `/usr/share/applications/runrat.desktop`
 - `/usr/share/runrat/icons/*.svg`
 - `/usr/share/pixmaps/runrat.svg`
 - `/usr/share/licenses/runrat/LICENSE`
+
+Publish updates by bumping the package version, updating the source checksum, regenerating `.SRCINFO`, validating with `makepkg`, and pushing `PKGBUILD` plus `.SRCINFO` to the AUR `runrat` repository.
