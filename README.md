@@ -67,7 +67,7 @@ NOTARY_PROFILE=<profile-name> ./scripts/notarize-release.sh
 
 ## Linux
 
-Install from the Arch User Repository:
+After publication to the Arch User Repository, install with:
 
 ```bash
 yay -S runrat
@@ -99,13 +99,13 @@ The cask template lives at [`packaging/homebrew/Casks/runrat.rb`](packaging/home
 
 ## Arch Linux
 
-RunRat is packaged for Arch Linux as [`runrat`](https://aur.archlinux.org/packages/runrat) in the AUR. Install it with an AUR helper:
+The Arch Linux package is named [`runrat`](https://aur.archlinux.org/packages/runrat) in the AUR. After publication, install it with an AUR helper:
 
 ```bash
 yay -S runrat
 ```
 
-The packaging source lives in [`packaging/aur`](packaging/aur). It builds the Linux implementation from the tagged GitHub source archive and installs the tray app, desktop entry, icons and MIT license file.
+The packaging template lives in [`packaging/aur`](packaging/aur). The AUR copy builds the Linux implementation from the tagged GitHub source archive and installs the tray app, desktop entry, icons and MIT license file.
 
 To publish an update, bump [`PKGBUILD`](packaging/aur/PKGBUILD), refresh `.SRCINFO`, validate with `makepkg` on Arch, then push those two files to the AUR Git repository.
 

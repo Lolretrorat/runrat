@@ -12,7 +12,7 @@ This is the Linux implementation of RunRat. It is a GTK 3 and Ayatana AppIndicat
 
 ## Install
 
-On Arch Linux, install RunRat from the AUR:
+After publication to the AUR, install RunRat on Arch Linux with:
 
 ```bash
 yay -S runrat
