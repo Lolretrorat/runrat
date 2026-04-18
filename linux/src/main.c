@@ -88,9 +88,11 @@ static gchar *resolve_icon_dir(void) {
     return g_strdup(env_dir);
   }
 
+#ifdef RUNRAT_SOURCE_ICON_DIR
   if (g_file_test(RUNRAT_SOURCE_ICON_DIR, G_FILE_TEST_IS_DIR)) {
     return g_strdup(RUNRAT_SOURCE_ICON_DIR);
   }
+#endif
 
   return g_strdup(RUNRAT_ICON_DIR);
 }

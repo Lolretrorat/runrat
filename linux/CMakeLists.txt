@@ -8,6 +8,8 @@ project(RunRatLinux
 
 include(GNUInstallDirs)
 
+option(RUNRAT_ENABLE_SOURCE_ICON_DIR "Enable source-tree icon fallback for development builds" ON)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 pkg_check_modules(APPINDICATOR REQUIRED ayatana-appindicator3-0.1)
@@ -22,8 +24,11 @@ target_compile_options(runrat PRIVATE ${GTK3_CFLAGS_OTHER} ${APPINDICATOR_CFLAGS
 target_compile_definitions(runrat PRIVATE
   RUNRAT_VERSION="${PROJECT_VERSION}"
   RUNRAT_ICON_DIR="${CMAKE_INSTALL_FULL_DATADIR}/runrat/icons"
-  RUNRAT_SOURCE_ICON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets"
 )
+
+if(RUNRAT_ENABLE_SOURCE_ICON_DIR)
+  target_compile_definitions(runrat PRIVATE RUNRAT_SOURCE_ICON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+endif()
 
 install(TARGETS runrat RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY assets/ DESTINATION ${CMAKE_INSTALL_DATADIR}/runrat/icons FILES_MATCHING PATTERN "*.svg")

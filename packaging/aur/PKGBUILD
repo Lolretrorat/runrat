@@ -16,7 +16,8 @@ build() {
     -S "${srcdir}/${pkgname}-${pkgver}/linux" \
     -B build \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DRUNRAT_ENABLE_SOURCE_ICON_DIR=OFF
   cmake --build build
 }
 
