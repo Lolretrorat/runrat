@@ -4,6 +4,8 @@ RunRat is a small system activity monitor that shows a running rat whose animati
 
 The app is inspired by the playful menu bar activity concept popularised by RunCat, reworked here as an original rat-based utility.
 
+The macOS implementation builds on work by soobs97 in [`soobs97/rundog`](https://github.com/soobs97/rundog).
+
 The repository contains separate platform implementations:
 
 - `macos/`: native macOS menu bar app built with Swift, SwiftUI and AppKit.
