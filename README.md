@@ -4,7 +4,7 @@ RunRat is a small system activity monitor that shows a running rat whose animati
 
 The app is inspired by the playful menu bar activity concept popularised by RunCat, reworked here as an original rat-based utility.
 
-The repository now contains separate platform implementations:
+The repository contains separate platform implementations:
 
 - `macos/`: native macOS menu bar app built with Swift, SwiftUI and AppKit.
 - `linux/`: GTK 3 and Ayatana AppIndicator tray app for Linux desktops.
@@ -35,11 +35,11 @@ The repository now contains separate platform implementations:
 
 ## macOS
 
+RunRat for macOS is built from [`macos/`](macos). It runs as a menu bar utility with no Dock icon.
+
 1. Open [`macos/RunRat.xcodeproj`](macos/RunRat.xcodeproj) in Xcode.
 2. Select the `RunRat` scheme.
 3. Run on `My Mac`.
-
-The app launches as a menu bar utility with no Dock icon.
 
 The rat uses the `runRat0` to `runRat5` asset sequence in [`Assets.xcassets`](macos/RunRat/Assets.xcassets). Frame order is fixed. Only playback interval changes.
 
@@ -51,14 +51,14 @@ mkdir -p /tmp/clang-cache
 CLANG_MODULE_CACHE_PATH=/tmp/clang-cache swift scripts/generate-rat-assets.swift
 ```
 
-Create a signed macOS release zip:
+Maintainers can create a signed macOS release zip with:
 
 ```bash
 cd macos
 ./scripts/package-release.sh
 ```
 
-If notarising, run the package step first and then:
+If notarising a public release, run the package step first and then:
 
 ```bash
 cd macos
@@ -67,7 +67,9 @@ NOTARY_PROFILE=<profile-name> ./scripts/notarize-release.sh
 
 ## Linux
 
-After publication to the Arch User Repository, install with:
+RunRat for Linux is built from [`linux/`](linux). It uses GTK 3 and Ayatana AppIndicator for desktop tray integration.
+
+On Arch Linux, install from the AUR once the package is available:
 
 ```bash
 yay -S runrat
@@ -95,11 +97,11 @@ cmake --install build/linux --prefix /usr/local
 
 ## Homebrew
 
-The cask template lives at [`packaging/homebrew/Casks/runrat.rb`](packaging/homebrew/Casks/runrat.rb). After publishing a signed and notarised macOS release zip, update the cask `version` and `sha256`, then copy it into a Homebrew tap.
+The Homebrew cask template lives at [`packaging/homebrew/Casks/runrat.rb`](packaging/homebrew/Casks/runrat.rb). It is intended for a public tap after a signed and notarised macOS release zip is available.
 
 ## Arch Linux
 
-The Arch Linux package is named [`runrat`](https://aur.archlinux.org/packages/runrat) in the AUR. After publication, install it with an AUR helper:
+The Arch Linux package is named [`runrat`](https://aur.archlinux.org/packages/runrat) in the AUR. Once it is published, install it with an AUR helper:
 
 ```bash
 yay -S runrat
@@ -107,7 +109,11 @@ yay -S runrat
 
 The packaging template lives in [`packaging/aur`](packaging/aur). The AUR copy builds the Linux implementation from the tagged GitHub source archive and installs the tray app, desktop entry, icons and MIT license file.
 
-To publish an update, bump [`PKGBUILD`](packaging/aur/PKGBUILD), refresh `.SRCINFO`, validate with `makepkg` on Arch, then push those two files to the AUR Git repository.
+Maintainers publishing an update should bump [`PKGBUILD`](packaging/aur/PKGBUILD), refresh `.SRCINFO`, validate with `makepkg` on Arch, then push those two files to the AUR Git repository.
+
+## Contributing
+
+Issues and pull requests are welcome. Please include the affected platform, the user-visible behavior changed, and the build or smoke-test steps you ran. Screenshots or short recordings are especially helpful for menu bar, tray, icon and popover changes.
 
 ## Notes
 

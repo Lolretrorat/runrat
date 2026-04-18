@@ -5,8 +5,8 @@ This is the native macOS implementation of RunRat. It is built with Swift, Swift
 ## Requirements
 
 - macOS 13 Ventura or newer
-- Full Xcode installation for building and archiving
-- Apple Developer ID certificate for public distribution
+- Xcode for building from source
+- Apple Developer ID certificate for signing public release builds
 
 ## Run
 
@@ -27,13 +27,13 @@ CLANG_MODULE_CACHE_PATH=/tmp/clang-cache swift scripts/generate-rat-assets.swift
 
 ## Release
 
-Create the release zip:
+Maintainers can create a release zip with:
 
 ```bash
 ./scripts/package-release.sh
 ```
 
-Notarise and staple the app before publishing:
+Notarise and staple public release builds before publishing:
 
 ```bash
 NOTARY_PROFILE=<profile-name> ./scripts/notarize-release.sh

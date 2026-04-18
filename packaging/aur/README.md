@@ -1,6 +1,6 @@
 # AUR Files
 
-This directory contains the `runrat` Arch User Repository package for the Linux implementation of RunRat.
+This directory contains the Arch User Repository packaging template for the Linux implementation of RunRat.
 
 The package builds the tagged GitHub source archive and installs:
 
@@ -12,13 +12,13 @@ The package builds the tagged GitHub source archive and installs:
 /usr/share/licenses/runrat/LICENSE
 ```
 
-Install after publication:
+Once published, install with:
 
 ```bash
 yay -S runrat
 ```
 
-## Publishing
+## Maintainer Publishing
 
 1. Update `pkgver` in [`PKGBUILD`](PKGBUILD) and keep it in sync with `linux/CMakeLists.txt`.
 2. Commit the release changes in the main repository.
